@@ -1,0 +1,43 @@
+{% extends "receipts/base.html" %}
+
+{% block content %}
+<div class="header">
+    <h1>{{ store_info.name }}</h1>
+    <p>{{ store_info.address }}</p>
+    <p>{{ store_info.phone }}</p>
+</div>
+
+<div class="receipt-info">
+    <p><strong>Receipt #:</strong> {{ receipt_number }}</p>
+    <p><strong>Date:</strong> {{ date.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+</div>
+
+<table class="items-table">
+    <thead>
+        <tr>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in items %}
+        <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ "%.2f"|format(item.price) }}</td>
+            <td>{{ "%.2f"|format(item.total) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="totals">
+    <p><strong>Subtotal:</strong> {{ "%.2f"|format(subtotal) }}</p>
+    <p><strong>Tax:</strong> {{ "%.2f"|format(tax) }}</p>
+    <p><strong>Total:</strong> {{ "%.2f"|format(total) }}</p>
+</div>
+
+<p>Payment Method: {{ payment_method }}</p>
+{% endblock %}

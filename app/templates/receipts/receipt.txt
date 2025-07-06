@@ -1,0 +1,16 @@
+{{ store_info.name }}
+{{ store_info.address }}
+{{ store_info.phone }}
+
+Receipt #: {{ receipt_number }}
+Date: {{ date.strftime('%Y-%m-%d %H:%M:%S') }}
+
+{% for item in items %}
+{{ item.quantity }} x {{ item.name }} @ {{ "%.2f"|format(item.price) }} = {{ "%.2f"|format(item.total) }}
+{% endfor %}
+
+Subtotal: {{ "%.2f"|format(subtotal) }}
+Tax: {{ "%.2f"|format(tax) }}
+Total: {{ "%.2f"|format(total) }}
+
+Payment Method: {{ payment_method }}

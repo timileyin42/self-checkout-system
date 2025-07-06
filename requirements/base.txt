@@ -1,0 +1,21 @@
+fastapi==0.111.0
+uvicorn==0.22.0
+
+# Database
+sqlalchemy==2.0.15
+asyncpg==0.27.0
+alembic==1.11.1
+psycopg2-binary==2.9.6  # For alembic migrations
+
+# Paystack
+httpx==0.24.1
+
+# Environment
+python-dotenv==1.0.0
+pydantic==2.7.1
+pydantic-settings==2.0.3
+
+# Security
+python-jose==3.3.0
+python-json-logger==2.0.7
+passlib==1.7.4
