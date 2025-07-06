@@ -1,3 +1,4 @@
 .env
 __pycache__/
 SelfCheckout_venv
+venv/

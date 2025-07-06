@@ -12,6 +12,16 @@ class DatabaseSessionManager:
         # convert to string and handle URL encoding
         db_url_str = str(db_url)
 
+        # Configure SSL for asyncpg with Neon database
+        connect_args = {}
+        if "neon.tech" in db_url_str:
+            connect_args = {
+                "ssl": "require",
+                "server_settings": {
+                    "jit": "off"
+                }
+            }
+
         self._engine = create_async_engine(
             db_url_str,
             poolclass=QueuePool,
@@ -19,6 +29,7 @@ class DatabaseSessionManager:
             max_overflow=10,
             pool_pre_ping=True,
             echo=settings.DB_ECHO,
+            connect_args=connect_args,
         )
         self._sessionmaker = sessionmaker(
             bind=self._engine,

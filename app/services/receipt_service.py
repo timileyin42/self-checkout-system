@@ -13,7 +13,7 @@ env = Environment(
 )
 
 class ReceiptService:
-    def __init__(self, db_session: AsyncSession = Depends(get_db)):
+    def __init__(self, db_session: AsyncSession):
         self.db = db_session
 
     async def generate_receipt_data(self, transaction_id: int) -> Dict[str, Any]:

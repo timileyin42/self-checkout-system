@@ -8,7 +8,7 @@ from app.models.db_models import Cart, AgeRestriction
 from app.services.exceptions import AgeVerificationError
 
 class AgeVerificationService:
-    def __init__(self, db_session: AsyncSession = Depends(get_db)):
+    def __init__(self, db_session: AsyncSession):
         self.db = db_session
 
     async def verify_cart_items(

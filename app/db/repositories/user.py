@@ -14,12 +14,23 @@ class UserRepository(BaseRepository[User, UserCreate, None]):
         return result.scalars().first()
 
     async def create(self, db: AsyncSession, *, obj_in: UserCreate) -> User:
+        from app.core.security import get_password_hash
+        
+        # Create username from first_name and last_name if provided
+        username = None
+        if obj_in.first_name and obj_in.last_name:
+            username = f"{obj_in.first_name.lower()}.{obj_in.last_name.lower()}"
+        elif obj_in.first_name:
+            username = obj_in.first_name.lower()
+        else:
+            # Use email prefix as username fallback
+            username = obj_in.email.split('@')[0]
+        
         db_obj = User(
             email=obj_in.email,
+            username=username,
             hashed_password=get_password_hash(obj_in.password),
-            first_name=obj_in.first_name,
-            last_name=obj_in.last_name,
-            phone_number=obj_in.phone_number,
+            phone=obj_in.phone_number,
         )
         db.add(db_obj)
         await db.commit()

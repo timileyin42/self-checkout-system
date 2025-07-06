@@ -12,7 +12,7 @@ from app.services.exceptions import (
 from app.models.db_models import Cart, CartItem, Product, AgeRestriction
 
 class CartService:
-    def __init__(self, db_session: AsyncSession = Depends(get_db)):
+    def __init__(self, db_session: AsyncSession):
         self.db = db_session
 
     async def get_or_create_cart(
@@ -157,4 +157,28 @@ class CartService:
             self.db, 
             user_id=target_user_id,
             load_items=True
+        )
+
+    # Transaction-related methods
+    async def get_user_transactions(
+        self,
+        user_id: int,
+        skip: int = 0,
+        limit: int = 100
+    ):
+        """Get user's transaction history"""
+        from app.db.repositories import transaction_repo
+        return await transaction_repo.get_user_transactions(
+            self.db,
+            user_id=user_id,
+            skip=skip,
+            limit=limit
+        )
+
+    async def get_transaction(self, transaction_id: int):
+        """Get a single transaction with items"""
+        from app.db.repositories import transaction_repo
+        return await transaction_repo.get_with_items(
+            self.db,
+            transaction_id=transaction_id
         )

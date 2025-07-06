@@ -3,7 +3,7 @@ from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, and_
 from sqlalchemy.orm import selectinload
-from app.models.db_models import Transaction, TransactionItem, TransactionStatus
+from app.models.db_models import Transaction, TransactionItem, TransactionStatus, Cart, PaymentStatus
 from app.models.schemas import TransactionCreate
 from .base import BaseRepository
 

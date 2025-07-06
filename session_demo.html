@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session Management Example</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .code { background: #f4f4f4; padding: 10px; border-radius: 3px; font-family: monospace; }
+        .info { background: #e7f3ff; padding: 10px; border-left: 4px solid #2196F3; }
+        .success { background: #d4edda; padding: 10px; border-left: 4px solid #28a745; }
+        .warning { background: #fff3cd; padding: 10px; border-left: 4px solid #ffc107; }
+        button { background: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ccc; border-radius: 3px; }
+        #output { background: #f8f9fa; padding: 10px; border-radius: 3px; min-height: 100px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Session Management for Self-Checkout System</h1>
+        
+        <div class="section">
+            <h2>Current Session Info</h2>
+            <div class="info">
+                <strong>Session ID:</strong> <span id="sessionId">Not generated yet</span><br>
+                <strong>User ID:</strong> <span id="userId">Not logged in</span><br>
+                <strong>Auth Token:</strong> <span id="authToken">None</span>
+            </div>
+            <button onclick="generateSessionId()">Generate New Session ID</button>
+            <button onclick="clearSession()">Clear Session</button>
+        </div>
+
+        <div class="section">
+            <h2>Login</h2>
+            <input type="email" id="email" placeholder="Email" value="tompsonphilip446@gmail.com">
+            <input type="password" id="password" placeholder="Password" value="@Maverick42">
+            <button onclick="login()">Login</button>
+            <button onclick="logout()">Logout</button>
+        </div>
+
+        <div class="section">
+            <h2>Test API Endpoints</h2>
+            <button onclick="testProducts()">Test Products (No session required)</button>
+            <button onclick="testTransactions()">Test Transactions (Requires User ID)</button>
+            <button onclick="testCartMerge()">Test Cart Merge (Requires both)</button>
+        </div>
+
+        <div class="section">
+            <h2>API Response</h2>
+            <div id="output"></div>
+        </div>
+
+        <div class="section">
+            <h2>How Session IDs Work</h2>
+            <div class="info">
+                <h3>1. Session ID Generation</h3>
+                <p>Session IDs are UUIDs generated when a user first visits your site. They're used to track guest users and their shopping carts.</p>
+                
+                <h3>2. Storage</h3>
+                <p>Store session IDs in browser localStorage so they persist across browser sessions.</p>
+                
+                <h3>3. Usage Scenarios</h3>
+                <ul>
+                    <li><strong>Guest User:</strong> Only needs X-Session-ID header</li>
+                    <li><strong>Logged-in User:</strong> Needs Authorization + X-User-ID headers</li>
+                    <li><strong>Cart Merge:</strong> Needs all three headers when user logs in</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>API Header Examples</h2>
+            
+            <h3>Guest User (Shopping Cart)</h3>
+            <div class="code">
+Headers: {
+    "X-Session-ID": "550e8400-e29b-41d4-a716-446655440000"
+}
+            </div>
+
+            <h3>Logged-in User (View Transactions)</h3>
+            <div class="code">
+Headers: {
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "X-User-ID": "123"
+}
+            </div>
+
+            <h3>Cart Merge (When User Logs In)</h3>
+            <div class="code">
+Headers: {
+    "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "X-User-ID": "123",
+    "X-Session-ID": "550e8400-e29b-41d4-a716-446655440000"
+}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api/v1';
+        
+        // Session Management
+        function generateSessionId() {
+            // Generate UUID v4
+            const sessionId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+            
+            localStorage.setItem('sessionId', sessionId);
+            updateDisplay();
+            log(`Generated new session ID: ${sessionId}`);
+        }
+
+        function clearSession() {
+            localStorage.removeItem('sessionId');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('authToken');
+            updateDisplay();
+            log('Session cleared');
+        }
+
+        function updateDisplay() {
+            document.getElementById('sessionId').textContent = localStorage.getItem('sessionId') || 'Not generated yet';
+            document.getElementById('userId').textContent = localStorage.getItem('userId') || 'Not logged in';
+            document.getElementById('authToken').textContent = localStorage.getItem('authToken') ? 'Present' : 'None';
+        }
+
+        function log(message) {
+            const output = document.getElementById('output');
+            output.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+            output.scrollTop = output.scrollHeight;
+        }
+
+        // Authentication
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                log('Please enter email and password');
+                return;
+            }
+
+            try {
+                log('Attempting login...');
+                
+                const response = await fetch(`${API_BASE}/auth/token`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('authToken', data.access_token);
+                    
+                    // Get user info
+                    const userResponse = await fetch(`${API_BASE}/auth/me`, {
+                        headers: {
+                            'Authorization': `Bearer ${data.access_token}`
+                        }
+                    });
+                    
+                    if (userResponse.ok) {
+                        const userData = await userResponse.json();
+                        localStorage.setItem('userId', userData.id);
+                        updateDisplay();
+                        log(`Login successful! User ID: ${userData.id}`);
+                    } else {
+                        log('Failed to get user info');
+                    }
+                } else {
+                    const error = await response.text();
+                    log(`Login failed: ${response.status} - ${error}`);
+                }
+            } catch (error) {
+                log(`Login error: ${error.message}`);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('userId');
+            localStorage.removeItem('authToken');
+            updateDisplay();
+            log('Logged out');
+        }
+
+        // API Testing
+        async function testProducts() {
+            try {
+                log('Testing products endpoint...');
+                const response = await fetch(`${API_BASE}/products/`);
+                const data = await response.json();
+                log(`Products: ${response.status} - Found ${data.length} products`);
+            } catch (error) {
+                log(`Products error: ${error.message}`);
+            }
+        }
+
+        async function testTransactions() {
+            const userId = localStorage.getItem('userId');
+            const authToken = localStorage.getItem('authToken');
+            
+            if (!userId || !authToken) {
+                log('Please login first to test transactions');
+                return;
+            }
+
+            try {
+                log('Testing transactions endpoint...');
+                const response = await fetch(`${API_BASE}/transactions/`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'X-User-ID': userId
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`Transactions: ${response.status} - Found ${data.length} transactions`);
+                } else {
+                    const error = await response.text();
+                    log(`Transactions failed: ${response.status} - ${error}`);
+                }
+            } catch (error) {
+                log(`Transactions error: ${error.message}`);
+            }
+        }
+
+        async function testCartMerge() {
+            const userId = localStorage.getItem('userId');
+            const authToken = localStorage.getItem('authToken');
+            let sessionId = localStorage.getItem('sessionId');
+            
+            if (!userId || !authToken) {
+                log('Please login first to test cart merge');
+                return;
+            }
+
+            if (!sessionId) {
+                generateSessionId();
+                sessionId = localStorage.getItem('sessionId');
+            }
+
+            try {
+                log('Testing cart merge endpoint...');
+                const response = await fetch(`${API_BASE}/auth/merge-cart`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'X-User-ID': userId,
+                        'X-Session-ID': sessionId,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`Cart merge: ${response.status} - Success`);
+                } else {
+                    const error = await response.text();
+                    log(`Cart merge failed: ${response.status} - ${error}`);
+                }
+            } catch (error) {
+                log(`Cart merge error: ${error.message}`);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Generate session ID if not exists
+            if (!localStorage.getItem('sessionId')) {
+                generateSessionId();
+            }
+            updateDisplay();
+            log('Session management demo loaded');
+        });
+    </script>
+</body>
+</html>

@@ -11,7 +11,7 @@ from app.services.exceptions import PaymentProcessingError
 logger = logging.getLogger(__name__)
 
 class PaymentService:
-    def __init__(self, db_session: AsyncSession = Depends(get_db)):
+    def __init__(self, db_session: AsyncSession):
         self.db = db_session
     
     async def process_payment(

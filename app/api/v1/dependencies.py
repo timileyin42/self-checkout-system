@@ -13,24 +13,24 @@ from app.services import (
 from app.services.exceptions import ServiceException
 from app.api.errors import handle_service_error
 
-async def get_cart_service():
-    return CartService()
-
-async def get_payment_service():
-    return PaymentService()
-
-async def get_inventory_service():
-    return InventoryService()
-
-async def get_receipt_service():
-    return ReceiptService()
-
-async def get_age_verification_service():
-    return AgeVerificationService()
-
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async for session in db_session_get_db():
         yield session
+
+async def get_cart_service(db: AsyncSession = Depends(get_db)):
+    return CartService(db_session=db)
+
+async def get_payment_service(db: AsyncSession = Depends(get_db)):
+    return PaymentService(db_session=db)
+
+async def get_inventory_service(db: AsyncSession = Depends(get_db)):
+    return InventoryService(db_session=db)
+
+async def get_receipt_service(db: AsyncSession = Depends(get_db)):
+    return ReceiptService(db_session=db)
+
+async def get_age_verification_service(db: AsyncSession = Depends(get_db)):
+    return AgeVerificationService(db_session=db)
 
 async def get_session_id(
     x_session_id: Optional[str] = Header(None, alias="X-Session-ID")

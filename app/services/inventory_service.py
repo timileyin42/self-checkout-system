@@ -1,13 +1,11 @@
 from typing import List, Optional, Dict
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends
 from app.db.repositories import inventory_repo, product_repo
-from app.db.session import get_db
 from app.models.db_models import Inventory, Product
 from app.services.exceptions import InsufficientStockError
 
 class InventoryService:
-    def __init__(self, db_session: AsyncSession = Depends(get_db)):
+    def __init__(self, db_session: AsyncSession):
         self.db = db_session
 
     async def get_product_inventory(self, product_id: int) -> Optional[Inventory]:
@@ -89,3 +87,55 @@ class InventoryService:
                 
         await self.db.commit()
         return results
+
+    async def get_active_products(
+        self,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[Product]:
+        """Get all active products"""
+        return await product_repo.get_active_products(
+            self.db,
+            skip=skip,
+            limit=limit
+        )
+
+    async def search_products(
+        self,
+        search_term: str,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[Product]:
+        """Search products by name or description"""
+        return await product_repo.search_products(
+            self.db,
+            search_term=search_term,
+            skip=skip,
+            limit=limit
+        )
+
+    async def get_products_by_category(
+        self,
+        category: str,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[Product]:
+        """Get products by category"""
+        return await product_repo.get_products_by_category(
+            self.db,
+            category=category,
+            skip=skip,
+            limit=limit
+        )
+
+    async def get_product_by_id(self, product_id: int) -> Optional[Product]:
+        """Get a single product by ID"""
+        return await product_repo.get_by_id(self.db, product_id)
+
+    async def get_product(self, product_id: int) -> Optional[Product]:
+        """Get a single product by ID (alias for get_product_by_id)"""
+        return await self.get_product_by_id(product_id)
+
+    async def get_product_by_barcode(self, barcode: str) -> Optional[Product]:
+        """Get a product by its barcode"""
+        return await product_repo.get_by_barcode(self.db, barcode)

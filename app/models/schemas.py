@@ -19,10 +19,17 @@ class UserCreate(UserBase):
             raise ValueError("Password must be at least 8 characters")
         return v
 
-class UserInDB(UserBase):
+class UserInDB(BaseModel):
     id: int
+    email: EmailStr
+    username: Optional[str] = None
+    phone: Optional[str] = None
     is_active: bool
     role: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
 
 class Token(BaseModel):
     access_token: str
